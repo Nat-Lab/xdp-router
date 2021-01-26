@@ -1,6 +1,3 @@
-SRC_DIR = src
-BUILD_DIR = bin
-
 LLC ?= llc
 CLANG ?= clang
 CC ?= gcc
@@ -17,17 +14,13 @@ LIBS = -l:libbpf.a -lelf
 BPF_CFLAGS ?= -I$(LIBBPF_DIR)/build/usr/include/ -I../headers/
 BPF_CFLAGS += -Wall -Wextra
 
-.PHONY: clean
+.PHONY: all clean
 
 all: router.o
 
 clean:
 	rm -rf $(LIBBPF_DIR)/build
 	$(MAKE) -C $(LIBBPF_DIR) clean
-	rm -rf $(BUILD_DIR)
-
-$(BUILD_DIR): 
-	mkdir -p $(BUILD_DIR)
 
 $(LIBBPF):
 	@if [ ! -d $(LIBBPF_DIR) ]; then \

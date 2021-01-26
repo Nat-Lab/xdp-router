@@ -34,3 +34,11 @@ To disable it:
 ```
 # ip link set ens193f0 xdp off
 ```
+
+### Acknowledgement
+
+I found the following documents and codes  useful during the writeup:
+
+- https://github.com/xdp-project/xdp-tutorial (basics)
+- https://github.com/jamesits/linux-gre-keepalive (the `Makefile` was copied from here)
+- https://github.com/torvalds/linux/tree/master/samples/bpf (loads of examples)
