@@ -35,6 +35,10 @@ To disable it:
 # ip link set ens193f0 xdp off
 ```
 
+### Note on VLAN
+
+To enable XDP for VLAN interfaces, enable XDP for their master interface. VLAN headers are automatically stripped and the encapsulated IP/IPv6 packets are routed. You may load the XDP executable on VLAN interfaces, but it will be in the "generic" mode and won't have any significant performance benefits, as the VLAN driver does not have XDP support. 
+
 ### Acknowledgement
 
 I found the following documents and codes  useful during the writeup:

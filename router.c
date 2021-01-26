@@ -15,13 +15,6 @@
 
 char _license[] SEC("license") = "GPL";
 
-struct bpf_map_def SEC("maps") vlan_info = {
-	.type        = BPF_MAP_TYPE_ARRAY,
-	.key_size    = sizeof(__u32),
-	.value_size  = sizeof(struct if_vlan_info),
-	.max_entries = MAX_IFACES,
-};
-
 // helper: decr ttl by 1 for IP and IPv6
 static inline void _decr_ttl(__u16 proto, void *h) {
     if (proto == ETH_P_IP) {
@@ -48,36 +41,21 @@ SEC("prog") int xdp_router(struct xdp_md *ctx) {
 
     // ptr to l3 protocol headers (or inner l2, if vlan)
     void *l3hdr = data + sizeof(struct ethhdr);
-    __u32 ifindex = ctx->ingress_ifindex;
-    struct if_vlan_info *in_vinfo = bpf_map_lookup_elem(&vlan_info, &ifindex);
 
     // ethertype
     __u16 ether_proto = bpf_ntohs(eth->h_proto);
 
     struct bpf_fib_lookup fib_params = {};
 
-    // vlan header found, check port
+    // vlan header found, just strip it.
     if (ether_proto == ETH_P_8021Q || ether_proto == ETH_P_8021AD) {
         // tagged pkt on non-trunked port, drop
-        if (!in_vinfo || in_vinfo->mode != VLAN_TRUNK) return XDP_DROP;
-
         struct vlan_hdr *vhdr = l3hdr;
         if (l3hdr + sizeof(struct vlan_hdr) > data_end) return XDP_DROP;
+        
         l3hdr += sizeof(struct vlan_hdr);
-
         ether_proto = vhdr->inner_ether_proto;
-
-#pragma clang loop unroll(full)
-        for (int i = 0; i < MAX_TRUNK_VLANS; ++i) {
-            // this vlan is trunked to this port, accept and continue.
-            if (in_vinfo->trunks[i] == vhdr->vlan_id) goto in_vlan_accepted;
-        }
-
-        // vlan not trunked to this port, drop.
-        return XDP_DROP;
     }
-
-in_vlan_accepted:
 
     if (ether_proto == ETH_P_IP) {
         if (l3hdr + sizeof(struct iphdr) > data_end) return XDP_DROP;
