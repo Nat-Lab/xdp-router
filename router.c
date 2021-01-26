@@ -25,15 +25,14 @@ static inline void _decr_ttl(__u16 proto, void *h) {
 
 SEC("prog") int xdp_router(struct xdp_md *ctx) {
     void *data_end = (void *)(long)ctx->data_end;
-	void *data = (void *)(long)ctx->data;
+    void *data = (void *)(long)ctx->data;
     struct ethhdr *eth = data; 
 
-    //__be64 *dest_mac = 0, *src_mac = 0; // len: 48 bits
     int rc;
 
-	if (data + sizeof(struct ethhdr) > data_end) {
+    if (data + sizeof(struct ethhdr) > data_end) {
         return XDP_DROP;
-	}
+    }
 
     void *l3hdr = data + sizeof(struct ethhdr);
     __u16 ether_proto = bpf_ntohs(eth->h_proto);
@@ -49,13 +48,13 @@ SEC("prog") int xdp_router(struct xdp_md *ctx) {
         if (ip->ttl <= 1) return XDP_PASS;
 
         fib_params.family = AF_INET;
-		fib_params.tos = ip->tos;
-		fib_params.l4_protocol = ip->protocol;
-		fib_params.sport = 0;
-		fib_params.dport = 0;
-		fib_params.tot_len = bpf_ntohs(ip->tot_len);
-		fib_params.ipv4_src = ip->saddr;
-		fib_params.ipv4_dst = ip->daddr;
+        fib_params.tos = ip->tos;
+        fib_params.l4_protocol = ip->protocol;
+        fib_params.sport = 0;
+        fib_params.dport = 0;
+        fib_params.tot_len = bpf_ntohs(ip->tot_len);
+        fib_params.ipv4_src = ip->saddr;
+        fib_params.ipv4_dst = ip->daddr;
 
         goto forward;
     }
@@ -67,13 +66,13 @@ SEC("prog") int xdp_router(struct xdp_md *ctx) {
         if (ip6->hop_limit <= 1) return XDP_PASS;
 
         fib_params.family = AF_INET6;
-		fib_params.flowinfo = *(__be32 *) ip6 & bpf_htonl(0x0FFFFFFF);
-		fib_params.l4_protocol = ip6->nexthdr;
-		fib_params.sport = 0;
-		fib_params.dport = 0;
-		fib_params.tot_len = bpf_ntohs(ip6->payload_len);
-		*(struct in6_addr *) fib_params.ipv6_src = ip6->saddr;
-		*(struct in6_addr *) fib_params.ipv6_dst = ip6->daddr;
+        fib_params.flowinfo = *(__be32 *) ip6 & bpf_htonl(0x0FFFFFFF);
+        fib_params.l4_protocol = ip6->nexthdr;
+        fib_params.sport = 0;
+        fib_params.dport = 0;
+        fib_params.tot_len = bpf_ntohs(ip6->payload_len);
+        *(struct in6_addr *) fib_params.ipv6_src = ip6->saddr;
+        *(struct in6_addr *) fib_params.ipv6_dst = ip6->daddr;
 
         goto forward;
     }
