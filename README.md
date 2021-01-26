@@ -24,8 +24,10 @@ $ make
 To forward with XDP on an interface, load the XDP executable on the interface with `ip-link`. For example, to forward traffic from `ens193f0` with XDP, do the following:
 
 ```
-# ip link set ens193f0 xdp object bin/router.o
+# ip link set ens193f0 xdp object ./router.o
 ```
+
+Note: to verify if a NIC is using XDP, do `ip link`. If you see something like `xdpgeneric`, that means your NIC driver does not support XDP, and you are using a generic SKB-based non-optimized XDP path. It will unlikely to give you any performance gain, and you are better off not use it. [Here](https://github.com/iovisor/bcc/blob/master/docs/kernel-versions.md#xdp)'s a nice list of NIC drivers with XDP support and their corresponding kernel version.
 
 To disable it:
 
